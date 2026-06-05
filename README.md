@@ -1,30 +1,331 @@
-[![CICD](https://github.com/amigoscode/spring-boot-fullstack-professional/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/amigoscode/spring-boot-fullstack-professional/actions/workflows/deploy.yml)
+# Construction Workforce Management System
 
-https://amigoscode.com/p/full-stack-spring-boot-react
+## Overview
 
-![Cover](https://user-images.githubusercontent.com/40702606/111074799-bdfbcf00-84dc-11eb-98c0-d40a99aa0da7.png)
+A Spring Boot based Workforce Management System for construction sites that manages workers, sites, attendance tracking, overtime calculations, and overtime settlements.
 
-# Course Description
-Spring Boot allows to take an idea/prototype and turn it into a real thing in matters minutes hours of months and years. A lot of companies use Spring Boot because it's easy to setup, learn and write code very fast without having to setup the low level platform code. Recently, Netflix has decided to switch their entire backend to Spring Boot. This shows that Spring Boot is a must if you are or want to become a software engineer in the Java world.
-This course teaches how to build a full stack application from the ground up and touches on very import concepts used in real live software development. Concepts such as:
+The system is designed to handle real-world workforce operations where site supervisors manage worker attendance, payroll teams process overtime settlements, and active workforce data needs to be retrieved efficiently.
 
-- Spring Boot Backend API
-- Frontend with React.js Hooks and Functions Components
-- Maven Build Tool
-- Databases using Postgres on Docker
-- Spring Data JPA
-- Server and Client Side Error Handling
-- Packaging applications for deployment using Docker and Jib
-- AWS RDS & Elastic Beanstalk
-- Software Deployment Automation with Github Actions
-- Software Deployment Monitoring with Slack
-- Unit and Integration Testing
+---
 
-This course focus on teaching you the process needed to build your own apps and deploy to real users using real software development techniques and skills. The skills gained at the end of this can be applied immediately on your own projects, university projects and at your work place.
+## Features
 
-Have you got what it takes to become a professional software engineer? Cool I'll see you inside. https://amigoscode.com/p/full-stack-spring-boot-react
+### Worker Management
 
-![Screenshot 2021-03-11 at 22 56 19](https://user-images.githubusercontent.com/40702606/111074929-5003d780-84dd-11eb-8284-e7c92c7e2905.png)
+- Create workers
+- Update worker details
+- Activate / deactivate workers
+- Track designation and wage rates
 
-<img width="773" alt="Screenshot 2021-03-12 at 20 48 48" src="https://user-images.githubusercontent.com/40702606/111074947-627e1100-84dd-11eb-9d3f-85fdbf23e290.png">
+### Site Management
 
+- Create construction sites
+- Update site details
+- Activate / deactivate sites
+
+### Attendance Management
+
+- Clock-in workers at sites
+- Prevent duplicate active clock-ins
+- Clock-out workers
+- Calculate total hours worked automatically
+- Calculate overtime hours automatically
+- Flag shifts longer than 16 hours
+- Attendance history with pagination
+
+### Active Workers Cache
+
+- Stores currently active workers in Redis
+- Supports fast retrieval without hitting PostgreSQL
+- Gracefully degrades when Redis is unavailable
+
+### Overtime Management
+
+- Automatically creates overtime entries during clock-out
+- Supports overtime summary reporting
+- Enforces monthly overtime cap of 60 hours
+- Supports overtime settlement workflow
+- Settlement is atomic using transactions
+
+---
+
+## Technology Stack
+
+| Technology            | Purpose               |
+| --------------------- | --------------------- |
+| Java 17               | Backend Development   |
+| Spring Boot 2.7       | Application Framework |
+| Spring Data JPA       | ORM Layer             |
+| Hibernate             | Persistence Provider  |
+| PostgreSQL (Supabase) | Primary Database      |
+| Redis                 | Caching Layer         |
+| Maven                 | Dependency Management |
+| Lombok                | Boilerplate Reduction |
+
+---
+
+## System Architecture
+
+```text
+Client
+   ↓
+Controllers
+   ↓
+Services
+   ↓
+Repositories
+   ↓
+PostgreSQL (Supabase)
+
+Redis
+ ↑
+Active Worker Cache
+```
+
+---
+
+## Database Design
+
+### Worker
+
+Stores worker information including:
+
+- Name
+- Phone Number
+- Designation
+- Daily Wage Rate
+- Active Status
+
+### Site
+
+Stores construction site information including:
+
+- Site Name
+- Location
+- Active Status
+
+### Attendance Log
+
+Stores:
+
+- Clock In Time
+- Clock Out Time
+- Total Hours Worked
+- Overtime Hours
+- Flagged Status
+
+### Overtime Entry
+
+Stores:
+
+- Overtime Date
+- Overtime Hours
+- Overtime Amount
+- Settlement Status
+
+---
+
+## API Endpoints
+
+### Worker APIs
+
+```http
+POST /api/workers
+GET /api/workers
+GET /api/workers/{id}
+PUT /api/workers/{id}
+DELETE /api/workers/{id}
+```
+
+### Site APIs
+
+```http
+POST /api/sites
+GET /api/sites
+GET /api/sites/{id}
+PUT /api/sites/{id}
+DELETE /api/sites/{id}
+```
+
+### Attendance APIs
+
+```http
+POST /api/attendance/clock-in
+POST /api/attendance/clock-out
+GET /api/attendance/active
+GET /api/attendance/log
+```
+
+### Overtime APIs
+
+```http
+GET /api/overtime/summary/{workerId}
+POST /api/overtime/settle/{workerId}
+```
+
+---
+
+## Redis Strategy
+
+Redis is used only for active worker tracking.
+
+### Why Redis?
+
+The active workers endpoint is frequently accessed by supervisors and dashboards.
+
+Instead of querying the database repeatedly:
+
+```text
+Clock In
+↓
+Store Active Worker in Redis
+
+Clock Out
+↓
+Remove Active Worker from Redis
+```
+
+This provides faster lookups and reduces database load.
+
+### Redis Failure Handling
+
+If Redis becomes unavailable:
+
+- Application continues to start
+- Attendance operations continue working
+- PostgreSQL remains the source of truth
+- Cache operations fail gracefully
+
+---
+
+## Overtime Rules
+
+### Standard Shift
+
+```text
+8 Hours
+```
+
+### Overtime Rules
+
+```text
+First 2 Overtime Hours  → 1.5x Rate
+Remaining Hours         → 2.0x Rate
+```
+
+### Monthly Cap
+
+```text
+Maximum 60 Overtime Hours Per Month
+```
+
+### Long Shift Flagging
+
+```text
+Shifts > 16 Hours
+```
+
+are automatically flagged for review.
+
+---
+
+## Ticket Blitz Fixes
+
+### LF-201
+
+Implemented centralized CORS configuration with environment-based allowed origins.
+
+### LF-202
+
+Implemented Redis degradation strategy allowing the application to function when Redis is unavailable.
+
+### LF-203
+
+Added pagination and eliminated N+1 query issues using EntityGraph.
+
+### LF-204
+
+Implemented transactional overtime settlement and after-commit event handling for notifications.
+
+### LF-205
+
+Configured HikariCP for Supabase and connection pool tuning.
+
+---
+
+## Setup Instructions
+
+### PostgreSQL (Supabase)
+
+Configure environment variables:
+
+```bash
+export DB_URL=...
+export DB_USERNAME=...
+export DB_PASSWORD=...
+```
+
+### Redis
+
+Install:
+
+```bash
+brew install redis
+```
+
+Start:
+
+```bash
+redis-server
+```
+
+### Run Application
+
+```bash
+mvn spring-boot:run
+```
+
+---
+
+## AI Usage
+
+AI tools were used for:
+
+- Design validation
+- Spring Boot implementation guidance
+- Debugging support
+- Architecture review
+
+All code was reviewed, integrated, tested, and adapted manually.
+
+---
+
+## Design Decisions
+
+### Why DTOs?
+
+To avoid exposing JPA entities directly and prevent lazy-loading serialization issues.
+
+### Why Redis?
+
+To optimize active worker lookups while keeping PostgreSQL as the system of record.
+
+### Why Transactional Settlement?
+
+To ensure overtime settlement remains atomic and prevents partial payroll updates.
+
+### Why Event-Based Notifications?
+
+Notifications are triggered only after successful transaction commits, preventing false settlement messages.
+
+---
+
+## Future Improvements
+
+- JWT Authentication
+- Role Based Access Control
+- SMS Gateway Integration
+- Audit Logging
+- Monitoring & Metrics
+- Docker Deployment
+- CI/CD Pipeline
