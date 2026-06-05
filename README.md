@@ -287,6 +287,126 @@ mvn spring-boot:run
 
 ---
 
+## Postman Usage
+
+### Base URL
+
+```text
+http://localhost:8080
+```
+
+### Worker APIs
+
+| Method | Endpoint            |
+| ------ | ------------------- |
+| POST   | `/api/workers`      |
+| GET    | `/api/workers`      |
+| GET    | `/api/workers/{id}` |
+| PUT    | `/api/workers/{id}` |
+| DELETE | `/api/workers/{id}` |
+
+#### Create Worker Request Body
+
+```json
+{
+  "name": "ALex Bell",
+  "phone": "9999999999",
+  "designation": "MASON",
+  "dailyWageRate": 800
+}
+```
+
+---
+
+### Site APIs
+
+| Method | Endpoint          |
+| ------ | ----------------- |
+| POST   | `/api/sites`      |
+| GET    | `/api/sites`      |
+| GET    | `/api/sites/{id}` |
+| PUT    | `/api/sites/{id}` |
+| DELETE | `/api/sites/{id}` |
+
+#### Create Site Request Body
+
+```json
+{
+  "siteName": "Whitefield Project",
+  "location": "Bangalore"
+}
+```
+
+---
+
+### Attendance APIs
+
+| Method | Endpoint                    |
+| ------ | --------------------------- |
+| POST   | `/api/attendance/clock-in`  |
+| POST   | `/api/attendance/clock-out` |
+| GET    | `/api/attendance/active`    |
+| GET    | `/api/attendance/log`       |
+
+#### Clock In Request
+
+```json
+{
+  "workerId": 1,
+  "siteId": 1
+}
+```
+
+#### Clock Out Request
+
+```json
+{
+  "workerId": 1
+}
+```
+
+#### Attendance Log Example
+
+```http
+GET /api/attendance/log?workerId=1&from=2026-06-01&to=2026-06-30&page=0&size=20
+```
+
+---
+
+### Overtime APIs
+
+| Method | Endpoint                           |
+| ------ | ---------------------------------- |
+| GET    | `/api/overtime/summary/{workerId}` |
+| POST   | `/api/overtime/settle/{workerId}`  |
+
+#### Overtime Summary Example
+
+```http
+GET /api/overtime/summary/1?month=2026-06
+```
+
+#### Overtime Settlement Example
+
+```http
+POST /api/overtime/settle/1?month=2026-05
+```
+
+---
+
+### Recommended Testing Order
+
+1. Create Worker
+2. Create Site
+3. Clock In Worker
+4. Clock Out Worker
+5. Check Active Workers
+6. Check Attendance History
+7. Check Overtime Summary
+8. Settle Overtime
+
+---
+
 ## AI Usage
 
 AI tools were used for:
