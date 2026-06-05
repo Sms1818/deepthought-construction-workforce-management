@@ -15,9 +15,12 @@ import com.example.demo.worker.WorkerRepository;
 import java.math.BigDecimal;
 import java.time.YearMonth;
 
+import org.springframework.context.ApplicationEventPublisher;
+
 import com.example.demo.exception.BadRequestException;
 import com.example.demo.exception.ConflictException;
 import com.example.demo.overtime.dto.OvertimeSettlementResponse;
+import com.example.demo.overtime.event.OvertimeSettledEvent;
 
 import lombok.AllArgsConstructor;
 
@@ -26,6 +29,8 @@ import lombok.AllArgsConstructor;
 public class OvertimeService {
     private final OvertimeRepository overtimeRepository;
     private final WorkerRepository workerRepository;
+
+    private final ApplicationEventPublisher eventPublisher;
 
     public OvertimeSummaryResponse getMonthlySummary(
             Long workerId,
@@ -94,6 +99,12 @@ public class OvertimeService {
         });
 
         overtimeRepository.saveAll(pendingEntries);
+        eventPublisher.publishEvent(
+                new OvertimeSettledEvent(
+                        workerId,
+                        month.toString(),
+                        settledHours,
+                        settledAmount));
 
         return OvertimeSettlementResponse.builder()
                 .workerId(workerId)
