@@ -13,7 +13,7 @@ import com.example.demo.worker.dto.CreateWorkerRequest;
 import lombok.AllArgsConstructor;
 
 @RestController
-@RequestMapping("/workers")
+@RequestMapping("/api/workers")
 @AllArgsConstructor
 public class WorkerController {
 

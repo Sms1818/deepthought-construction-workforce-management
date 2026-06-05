@@ -22,7 +22,7 @@ import com.example.demo.attendance.dto.ClockOutRequest;
 import lombok.AllArgsConstructor;
 
 @RestController
-@RequestMapping("/attendance")
+@RequestMapping("/api/attendance")
 @AllArgsConstructor
 public class AttendanceController {
 

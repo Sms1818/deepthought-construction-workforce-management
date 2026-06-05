@@ -13,7 +13,7 @@ import com.example.demo.site.dto.CreateSiteRequest;
 import lombok.AllArgsConstructor;
 
 @RestController
-@RequestMapping("/sites")
+@RequestMapping("/api/sites")
 @AllArgsConstructor
 public class SiteController {
 
