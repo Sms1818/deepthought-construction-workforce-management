@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.attendance.dto.ActiveWorkerCacheDto;
+
 import java.util.List;
 
 import com.example.demo.attendance.dto.ClockInRequest;
@@ -17,10 +18,13 @@ import com.example.demo.site.Site;
 import com.example.demo.site.SiteRepository;
 import com.example.demo.worker.Worker;
 import com.example.demo.worker.WorkerRepository;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
+
+import com.example.demo.attendance.dto.AttendanceResponse;
 
 import lombok.AllArgsConstructor;
 
@@ -36,7 +40,7 @@ public class AttendanceService {
     private final ActiveWorkerCacheService activeWorkerCacheService;
 
     @Transactional
-    public AttendanceLog clockIn(ClockInRequest request) {
+    public AttendanceResponse clockIn(ClockInRequest request) {
         Worker worker = workerRepository.findById(request.getWorkerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Worker not found"));
 
@@ -75,12 +79,12 @@ public class AttendanceService {
 
         activeWorkerCacheService.addActiveWorker(cacheDto);
 
-        return savedAttendanceLog;
+        return AttendanceResponse.fromEntity(savedAttendanceLog);
 
     }
 
     @Transactional
-    public AttendanceLog clockOut(ClockOutRequest request) {
+    public AttendanceResponse clockOut(ClockOutRequest request) {
         AttendanceLog attendanceLog = attendanceRepository
                 .findByWorkerIdAndClockOutTimeIsNull(request.getWorkerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Worker is not currently clocked in"));
@@ -98,24 +102,26 @@ public class AttendanceService {
         AttendanceLog savedAttendanceLog = attendanceRepository.save(attendanceLog);
         activeWorkerCacheService.removeActiveWorker(request.getWorkerId());
 
-        return savedAttendanceLog;
+        return AttendanceResponse.fromEntity(savedAttendanceLog);
     }
 
     public List<ActiveWorkerCacheDto> getActiveWorkers() {
         return activeWorkerCacheService.getActiveWorkers();
     }
 
-    public Page<AttendanceLog> getAttendanceLog(
+    public Page<AttendanceResponse> getAttendanceLog(
             Long workerId,
             LocalDate from,
             LocalDate to,
             int page,
             int size) {
-        return attendanceRepository.findByWorkerIdAndClockInTimeBetween(
+        Page<AttendanceLog> logs = attendanceRepository.findByWorkerIdAndClockInTimeBetween(
                 workerId,
                 from.atStartOfDay(),
                 to.plusDays(1).atStartOfDay(),
                 PageRequest.of(page, size));
+
+        return logs.map(AttendanceResponse::fromEntity);
     }
 
 }
