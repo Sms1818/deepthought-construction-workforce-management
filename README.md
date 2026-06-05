@@ -1,5 +1,17 @@
 # Construction Workforce Management System
 
+## HRMS Forked
+
+I forked the Amigoscode Spring Boot Fullstack Professional HRMS-style project because it already had a Spring Boot backend structure, frontend setup, and deployment-related configuration such as Elastic Beanstalk/Jib. I used it as a base and focused my implementation on the backend assignment requirements: workforce attendance, Redis active-worker cache, overtime calculation, settlement, and production ticket fixes.
+
+---
+
+## Frontend Note
+
+The original fork contained frontend and deployment-related setup. For this assignment, I focused only on the Java backend requirements because the role simulation specifically evaluates backend APIs, schema design, Redis usage, transactions, configuration, and production ticket fixes.
+
+---
+
 ## Overview
 
 A Spring Boot based Workforce Management System for construction sites that manages workers, sites, attendance tracking, overtime calculations, and overtime settlements.
